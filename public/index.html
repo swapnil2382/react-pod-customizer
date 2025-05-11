@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>T-Shirt Designer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {},
+      },
+      corePlugins: {
+        colorFormat: "rgb",
+      },
+    };
+  </script>
+  <!-- React and ReactDOM -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.6/babel.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- react-hook-form -->
+  <script src="https://cdn.jsdelivr.net/npm/react-hook-form@7.43.0/dist/index.umd.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    // App.jsx
+    const { useState, useEffect } = React;
+    const { useForm } = ReactHookForm;
+
+    function App() {
+      const { register, watch, setValue } = useForm({
+        defaultValues: {
+          textPrint: "",
+          shirtColor: "#ffffff",
+          textColor: "#000000",
+          height: 180,
+          weight: 80,
+          build: "athletic",
+        },
+      });
+
+      const [image, setImage] = useState("https://via.placeholder.com/150");
+      const [imageSize] = useState(28);
+      const [textSizes, setTextSizes] = useState([24]);
+      const [designPosition, setDesignPosition] = useState({ top: "30%", left: "50%" });
+      const [textPositions, setTextPositions] = useState([{ top: "50%", left: "50%" }]);
+      const [activeTab, setActiveTab] = useState("text");
+      const [themeIndex, setThemeIndex] = useState(0);
+
+      const themes = [
+        {
+          name: "Light",
+          classes: {
+            bg: "bg-gray-50",
+            button: "bg-blue-600 hover:bg-blue-700",
+            text: "text-gray-800",
+            card: "bg-white",
+            border: "border-gray-300",
+          },
+        },
+        {
+          name: "Dark",
+          classes: {
+            bg: "bg-gray-900",
+            button: "bg-purple-600 hover:bg-purple-700",
+            text: "text-white",
+            card: "bg-gray-800",
+            border: "border-gray-700",
+          },
+        },
+        {
+          name: "Vibrant",
+          classes: {
+            bg: "bg-yellow-100",
+            button: "bg-red-600 hover:bg-red-700",
+            text: "text-gray-900",
+            card: "bg-white",
+            border: "border-yellow-300",
+          },
+        },
+      ];
+
+      const currentTheme = themes[themeIndex];
+
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.altKey && e.key === "q") {
+            setThemeIndex((prev) => (prev + 1) % themes.length);
+          }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+      }, []);
+
+      const defaultTshirtUrl = "https://cdn2.iconfinder.com/data/icons/shirts/100/shirts-06-1024.png";
+
+      const handleImage = (e) => {
+        const file = e.dataTransfer ? e.dataTransfer.files[0] : e.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+          setImage(URL.createObjectURL(file));
+        }
+      };
+
+      const textLines = watch("textPrint")?.split("\n").slice(0, 3) || [""];
+
+      const handleTextPositionChange = (index, positionType, value) => {
+        const newPositions = [...textPositions];
+        if (!newPositions[index]) {
+          newPositions[index] = { top: "50%", left: "50%" };
+        }
+        newPositions[index] = { ...newPositions[index], [positionType]: value };
+        setTextPositions(newPositions);
+      };
+
+      const handleTextSizeChange = (index, value) => {
+        const newSizes = [...textSizes];
+        newSizes[index] = value;
+        setTextSizes(newSizes);
+      };
+
+      const handleImagePositionChange = (positionType, value) => {
+        setDesignPosition((prev) => ({
+          ...prev,
+          [positionType]: value,
+        }));
+      };
+
+      const colorPresets = [
+        { name: "Blue", value: "#3b82f6" },
+        { name: "Red", value: "#ef4444" },
+        { name: "Green", value: "#10b981" },
+        { name: "Black", value: "#000000" },
+        { name: "White", value: "#ffffff" },
+      ];
+
+      return (
+        <div className={`min-h-screen ${currentTheme.classes.bg}`}>
+          <main className="max-w-6xl mx-auto px-4 py-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <PreviewSection
+                formData={watch()}
+                image={image}
+                imageSize={imageSize}
+                textSizes={textSizes}
+                textPositions={textPositions}
+                designPosition={designPosition}
+                textLines={textLines}
+                defaultTshirtUrl={defaultTshirtUrl}
+                colorPresets={colorPresets}
+                setFormData={setValue}
+                theme={currentTheme}
+              />
+              <DesignControls
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                formData={watch()}
+                register={register}
+                textLines={textLines}
+                textSizes={textSizes}
+                textPositions={textPositions}
+                handleTextSizeChange={handleTextSizeChange}
+                handleTextPositionChange={handleTextPositionChange}
+                image={image}
+                handleImage={handleImage}
+                imageSize={imageSize}
+                designPosition={designPosition}
+                handleImagePositionChange={handleImagePositionChange}
+                setFormData={setValue}
+                theme={currentTheme}
+              />
+            </div>
+          </main>
+          <TextInputBox
+            textPrint={watch("textPrint")}
+            setTextPrint={(value) => setValue("textPrint", value)}
+            theme={currentTheme}
+          />
+        </div>
+      );
+    }
+
+    // PreviewSection.jsx
+    function PreviewSection({
+      formData,
+      image,
+      imageSize,
+      textSizes,
+      textPositions,
+      designPosition,
+      textLines,
+      defaultTshirtUrl,
+      colorPresets,
+      setFormData,
+      theme,
+    }) {
+      const designRef = React.useRef(null);
+
+      const handlePrint = () => {
+        if (designRef.current) {
+          html2canvas(designRef.current, {
+            scale: 2,
+            backgroundColor: null,
+            logging: false,
+          })
+            .then((canvas) => {
+              const link = document.createElement("a");
+              link.download = "custom-tshirt-design.png";
+              link.href = canvas.toDataURL("image/png");
+              link.click();
+            })
+            .catch((error) => {
+              console.error("Error generating canvas:", error);
+              alert("Failed to download design. Please try again or use a different browser.");
+            });
+        }
+      };
+
+      return (
+        <div className="w-full lg:w-1/2">
+          <div className={`${theme.classes.card} rounded-lg shadow-lg p-6 mb-6`}>
+            <h2 className={`text-xl font-semibold ${theme.classes.text} mb-4`}>Design Preview</h2>
+            <div
+              ref={designRef}
+              className="relative w-full h-96 flex items-center justify-center rounded-lg overflow-hidden"
+              style={{ backgroundColor: "#f3f4f6" }}
+            >
+              <div className="absolute inset-0" style={{ backgroundColor: formData.shirtColor }} />
+              <img
+                src={defaultTshirtUrl}
+                alt="T-Shirt"
+                className="w-full h-full object-contain absolute top-0 left-0 opacity-95"
+              />
+              {image && (
+                <img
+                  src={image}
+                  alt="Custom Design"
+                  className="absolute max-h-full"
+                  style={{
+                    top: designPosition.top,
+                    left: designPosition.left,
+                    width: `${imageSize}%`,
+                    objectFit: "contain",
+                    transform: "translateX(-50%)",
+                  }}
+                />
+              )}
+              {textLines.map((line, index) => (
+                <div
+                  key={index}
+                  className="absolute text-center font-bold"
+                  style={{
+                    top: textPositions[index]?.top || "50%",
+                    left: textPositions[index]?.left || "50%",
+                    color: formData.textColor,
+                    fontSize: `${textSizes[index] || 24}px`,
+                    transform: "translateX(-50%)",
+                    textShadow: formData.textColor === "#ffffff" ? "1px 1px 3px rgba(0,0,0,0.3)" : "none",
+                    maxWidth: "80%",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {line}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={`${theme.classes.card} rounded-lg shadow-lg p-6`}>
+            <h3 className={`text-lg font-semibold ${theme.classes.text} mb-4`}>Quick Color Selection</h3>
+            <div className="flex flex-wrap gap-3 mb-6">
+              {colorPresets.map((color) => (
+                <button
+                  key={color.name}
+                  onClick={() => setFormData("shirtColor", color.value)}
+                  className="w-12 h-12 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                  aria-label={`Select ${color.name} color`}
+                />
+              ))}
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={handlePrint}
+                className={`w-full py-2 px-4 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.classes.button}`}
+                style={{ backgroundColor: "#2563eb" }}
+              >
+                Print Design
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // DesignControls.jsx
+    function DesignControls({
+      activeTab,
+      setActiveTab,
+      formData,
+      register,
+      textLines,
+      textSizes,
+      textPositions,
+      handleTextSizeChange,
+      handleTextPositionChange,
+      image,
+      handleImage,
+      imageSize,
+      designPosition,
+      handleImagePositionChange,
+      setFormData,
+      theme,
+    }) {
+      return (
+        <div className="w-full lg:w-1/2">
+          <div className={`${theme.classes.card} rounded-lg shadow-lg p-6`}>
+            <h2 className={`text-xl font-semibold ${theme.classes.text} mb-6`}>Customize Your T-Shirt</h2>
+            <div className="mb-6 border-b border-gray-200">
+              <nav className="flex space-x-6">
+                {["text", "image", "color", "sizing"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-3 px-1 font-medium border-b-2 ${
+                      activeTab === tab
+                        ? `border-blue-500 text-blue-600`
+                        : `border-transparent ${theme.classes.text} hover:text-gray-700`
+                    }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            {activeTab === "text" && (
+              <TextTab
+                formData={formData}
+                register={register}
+                textLines={textLines}
+                textSizes={textSizes}
+                textPositions={textPositions}
+                handleTextSizeChange={handleTextSizeChange}
+                handleTextPositionChange={handleTextPositionChange}
+                theme={theme}
+              />
+            )}
+            {activeTab === "image" && (
+              <ImageTab
+                image={image}
+                handleImage={handleImage}
+                imageSize={imageSize}
+                designPosition={designPosition}
+                handleImagePositionChange={handleImagePositionChange}
+                theme={theme}
+              />
+            )}
+            {activeTab === "color" && (
+              <ColorTab formData={formData} setFormData={setFormData} register={register} theme={theme} />
+            )}
+            {activeTab === "sizing" && <SizingTab register={register} theme={theme} />}
+          </div>
+        </div>
+      );
+    }
+
+    // TextTab.jsx
+    function TextTab({
+      formData,
+      register,
+      textLines,
+      textSizes,
+      textPositions,
+      handleTextSizeChange,
+      handleTextPositionChange,
+      theme,
+    }) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <label className={`block font-medium ${theme.classes.text} mb-2`}>Text Color</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="color"
+                {...register("textColor")}
+                className="w-12 h-12 rounded cursor-pointer border-0"
+              />
+              <span className={theme.classes.text}>{formData.textColor}</span>
+            </div>
+          </div>
+          {textLines.map((_, index) => (
+            <div key={index} className={`${theme.classes.card} p-4 rounded-lg ${theme.classes.border}`}>
+              <h4 className={`font-medium ${theme.classes.text} mb-3`}>Line {index + 1} Settings</h4>
+              <div className="mb-4">
+                <label className={`block font-medium ${theme.classes.text} mb-2`}>Size</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="12"
+                    max="100"
+                    value={textSizes[index] || 24}
+                    onChange={(e) => handleTextSizeChange(index, e.target.value)}
+                    className="w-full"
+                  />
+                  <span className={`${theme.classes.text} w-8`}>{textSizes[index] || 24}px</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block font-medium ${theme.classes.text} mb-2`}>Vertical Position</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={parseInt(textPositions[index]?.top || "50%")}
+                    onChange={(e) => handleTextPositionChange(index, "top", `${e.target.value}%`)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className={`block font-medium ${theme.classes.text} mb-2`}>Horizontal Position</label>
+                  <input
+                    type="range"
+                    min="20"
+                    max="80"
+                    value={parseInt(textPositions[index]?.left || "50%")}
+                    onChange={(e) => handleTextPositionChange(index, "left", `${e.target.value}%`)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ImageTab.jsx
+    function ImageTab({ image, handleImage, designPosition, handleImagePositionChange, theme }) {
+      return (
+        <div className="space-y-6">
+          <div
+            className={`${theme.classes.card} p-4 rounded-lg ${theme.classes.border} border-dashed text-center`}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleImage}
+          >
+            <label className={`block font-medium ${theme.classes.text} mb-3`}>Upload Design Image</label>
+            <p className={`${theme.classes.text} mb-2`}>Drop an image here or</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImage}
+              className="block w-full text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {image && (
+              <img
+                src={image}
+                alt="Preview"
+                className="mt-4 w-24 h-24 object-contain mx-auto"
+              />
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={`block font-medium ${theme.classes.text} mb-2`}>Vertical Position</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={parseInt(designPosition.top || "30%")}
+                onChange={(e) => handleImagePositionChange("top", `${e.target.value}%`)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className={`block font-medium ${theme.classes.text} mb-2`}>Horizontal Position</label>
+              <input
+                type="range"
+                min="20"
+                max="80"
+                value={parseInt(designPosition.left || "50%")}
+                onChange={(e) => handleImagePositionChange("left", `${e.target.value}%`)}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ColorTab.jsx
+    function ColorTab({ formData, setFormData, register, theme }) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <label className={`block font-medium ${theme.classes.text} mb-2`}>T-Shirt Color</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="color"
+                {...register("shirtColor")}
+                className="w-12 h-12 rounded cursor-pointer border-0"
+              />
+              <span className={theme.classes.text}>{formData.shirtColor}</span>
+            </div>
+          </div>
+          <div>
+            <h4 className={`font-medium ${theme.classes.text} mb-3`}>Popular Colors</h4>
+            <div className="grid grid-cols-5 gap-3">
+              {[
+                "#3b82f6",
+                "#ef4444",
+                "#10b981",
+                "#f59e0b",
+                "#8b5cf6",
+                "#ec4899",
+                "#000000",
+                "#ffffff",
+                "#6b7280",
+                "#78350f",
+              ].map((color, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setFormData("shirtColor", color)}
+                  className="w-12 h-12 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  style={{
+                    backgroundColor: color,
+                    transform: formData.shirtColor === color ? "scale(1.1)" : "scale(1)",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // SizingTab.jsx
+    function SizingTab({ register, theme }) {
+      return (
+        <div className="space-y-6">
+          <div>
+            <label className={`block font-medium ${theme.classes.text} mb-2`}>Height (cm)</label>
+            <input
+              type="number"
+              {...register("height", { valueAsNumber: true })}
+              className={`w-full border ${theme.classes.border} rounded-lg p-3 shadow-sm focus:ring-2 focus:ring-blue-500`}
+              placeholder="180"
+            />
+          </div>
+          <div>
+            <label className={`block font-medium ${theme.classes.text} mb-2`}>Weight (kg)</label>
+            <input
+              type="number"
+              {...register("weight", { valueAsNumber: true })}
+              className={`w-full border ${theme.classes.border} rounded-lg p-3 shadow-sm focus:ring-2 focus:ring-blue-500`}
+              placeholder="80"
+            />
+          </div>
+          <div>
+            <label className={`block font-medium ${theme.classes.text} mb-2`}>Build</label>
+            <select
+              {...register("build")}
+              className={`w-full border ${theme.classes.border} rounded-lg p-3 shadow-sm focus:ring-2 focus:ring-blue-500`}
+            >
+              <option value="lean">Lean</option>
+              <option value="regular">Regular</option>
+              <option value="athletic">Athletic</option>
+              <option value="big">Big</option>
+            </select>
+          </div>
+        </div>
+      );
+    }
+
+    // TextInputBox.jsx
+    function TextInputBox({ textPrint, setTextPrint, theme }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <textarea
+            value={textPrint}
+            onChange={(e) => setTextPrint(e.target.value)}
+            rows={3}
+            maxLength={120}
+            placeholder="Enter text to print (max 3 lines)"
+            className={`w-full border ${theme.classes.border} rounded-lg p-4 shadow-lg text-lg ${theme.classes.text} focus:ring-2 focus:ring-blue-500`}
+          />
+        </div>
+      );
+    }
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
