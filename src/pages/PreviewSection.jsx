@@ -59,7 +59,7 @@ function PreviewSection({
               style={{
                 top: designPosition.top,
                 left: designPosition.left,
-                width: `${imageSize}%`,
+                width: imageSize, // Directly use imageSize as percentage string
                 objectFit: "contain",
                 transform: "translateX(-50%)",
               }}

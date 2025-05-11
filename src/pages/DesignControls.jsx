@@ -14,6 +14,7 @@ function DesignControls({
   textPositions,
   handleTextSizeChange,
   handleTextPositionChange,
+  handleImageSizeChange,
   image,
   handleImage,
   imageSize,
@@ -62,6 +63,7 @@ function DesignControls({
             imageSize={imageSize}
             designPosition={designPosition}
             handleImagePositionChange={handleImagePositionChange}
+             handleImageSizeChange={handleImageSizeChange}
             theme={theme}
           />
         )}

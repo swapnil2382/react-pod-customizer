@@ -16,7 +16,7 @@ function App() {
   });
 
   const [image, setImage] = useState("https://via.placeholder.com/150");
-  const [imageSize] = useState(28);
+  const [imageSize, setImageSize] = useState("50%"); // Percentage string
   const [textSizes, setTextSizes] = useState([24]);
   const [designPosition, setDesignPosition] = useState({ top: "30%", left: "50%" });
   const [textPositions, setTextPositions] = useState([{ top: "50%", left: "50%" }]);
@@ -75,6 +75,10 @@ function App() {
     if (file && file.type.startsWith("image/")) {
       setImage(URL.createObjectURL(file));
     }
+  };
+
+  const handleImageSizeChange = (dimension, value) => {
+    setImageSize(value); // Update imageSize with percentage string
   };
 
   const textLines = watch("textPrint")?.split("\n").slice(0, 3) || [""];
@@ -139,6 +143,7 @@ function App() {
             image={image}
             handleImage={handleImage}
             imageSize={imageSize}
+            handleImageSizeChange={handleImageSizeChange}
             designPosition={designPosition}
             handleImagePositionChange={handleImagePositionChange}
             setFormData={setValue}
